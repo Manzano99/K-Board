@@ -10,9 +10,10 @@ interface Props {
   column: Column;
   tasks: Task[];
   onEditTask: (task: Task) => void;
+  onDeleteTask: (taskId: string | number) => void;
 }
 
-function ColumnContainer({ column, tasks, onEditTask }: Props) {
+function ColumnContainer({ column, tasks, onEditTask, onDeleteTask }: Props) {
   const addTask = useStore((state) => state.addTask);
   const tasksIds = useMemo(() => tasks.map((task) => task.id), [tasks]);
 
@@ -47,7 +48,12 @@ function ColumnContainer({ column, tasks, onEditTask }: Props) {
       <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
         <SortableContext items={tasksIds}>
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onEditTask={onEditTask} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+            />
           ))}
         </SortableContext>
       </div>

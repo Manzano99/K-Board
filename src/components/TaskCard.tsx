@@ -7,6 +7,7 @@ import { CSS } from "@dnd-kit/utilities";
 interface Props {
   task: Task & { content?: string };
   onEditTask?: (task: Task) => void;
+  onDeleteTask?: (taskId: string | number) => void;
 }
 
 const badgeColors: Record<Priority, string> = {
@@ -35,12 +36,10 @@ const getDaysDisplay = (startDateString?: string, endDateString?: string) => {
   const end = new Date(endDateString);
   const now = new Date();
 
-  // Reseteamos horas
   start.setHours(0, 0, 0, 0);
   end.setHours(0, 0, 0, 0);
   now.setHours(0, 0, 0, 0);
 
-  // Validación: La fecha no puede ser anterior a la de inicio
   if (end < start) return null;
 
   if (now < start) {
@@ -48,7 +47,7 @@ const getDaysDisplay = (startDateString?: string, endDateString?: string) => {
       (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
     );
     return {
-      text: `${totalDuration} días`,
+      text: `${totalDuration} días previstos`,
       style: "text-gray-500",
       iconColor: "stroke-gray-500",
     };
@@ -92,14 +91,12 @@ const getDaysDisplay = (startDateString?: string, endDateString?: string) => {
   };
 };
 
-function TaskCard({ task, onEditTask }: Props) {
-  const deleteTask = useStore((state) => state.deleteTask);
+function TaskCard({ task, onEditTask, onDeleteTask }: Props) {
   const updateTaskPriority = useStore((state) => state.updateTaskPriority);
 
   const currentPriority: Priority = task.priority || "Low";
   const content = task.description || task.content || "";
 
-  // Calcula el estado visual usando ambas fechas
   const daysStatus = getDaysDisplay(task.startDate, task.endDate);
 
   const {
@@ -185,11 +182,10 @@ function TaskCard({ task, onEditTask }: Props) {
           <span>{formatDate(task.endDate)}</span>
         </div>
 
-        {/* --- CONTADOR DINÁMICO --- */}
         {daysStatus && (
           <div
             className={`flex items-center gap-1.5 ml-auto ${daysStatus.style}`}
-            title="Estado de entrega"
+            title="Estado"
           >
             <Timer size={12} className={daysStatus.iconColor} />
             <span>{daysStatus.text}</span>
@@ -200,7 +196,8 @@ function TaskCard({ task, onEditTask }: Props) {
       <button
         onClick={(e) => {
           e.stopPropagation();
-          deleteTask(task.id);
+          // LLAMAMOS A LA PROP (para abrir el modal en App)
+          onDeleteTask?.(task.id);
         }}
         onPointerDown={(e) => e.stopPropagation()}
         className="stroke-gray-500 absolute -right-2 -top-2 bg-gray-900 p-2 rounded-full border border-gray-700 opacity-0 group-hover:opacity-100 hover:stroke-red-500 hover:border-red-500 hover:bg-gray-950 transition-all shadow-lg z-10"

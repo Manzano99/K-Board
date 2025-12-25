@@ -12,18 +12,20 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { Toaster, toast } from "sonner";
-import { Search } from "lucide-react"; // 1. Importamos el icono
+import { Search } from "lucide-react";
 
 import ColumnContainer from "./components/ColumnContainer";
 import TaskCard from "./components/TaskCard";
 import TaskModal from "./components/TaskModal";
+import AlertModal from "./components/AlertModal";
 import { useStore } from "./store/useStore";
-import type { Column, Task } from "./types";
+import type { Column, Task, Id } from "./types";
 
 function App() {
   const columns = useStore((state) => state.columns);
   const tasks = useStore((state) => state.tasks);
   const setTasks = useStore((state) => state.setTasks);
+  const deleteTask = useStore((state) => state.deleteTask);
 
   const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);
 
@@ -31,7 +33,9 @@ function App() {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // 2. Estado para el buscador
+  // Estado para el ID de la tarea que se intenta borrar
+  const [deletingTaskId, setDeletingTaskId] = useState<Id | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
 
   const sensors = useSensors(
@@ -42,9 +46,6 @@ function App() {
     })
   );
 
-  // 3. Lógica de filtrado
-  // Filtramos las tareas ANTES de distribuirlas a las columnas.
-  // Buscamos coincidencia en Título o Descripción (ignorando mayúsculas/minúsculas)
   const filteredTasks = useMemo(() => {
     if (!searchQuery) return tasks;
 
@@ -52,7 +53,6 @@ function App() {
 
     return tasks.filter((task) => {
       const titleMatch = task.title.toLowerCase().includes(lowerQuery);
-      // Soporte seguro para descripción o contenido antiguo
       const description = task.description || "";
       const descMatch = description.toLowerCase().includes(lowerQuery);
 
@@ -60,9 +60,17 @@ function App() {
     });
   }, [tasks, searchQuery]);
 
+  // Función que ejecuta el borrado
+  const handleConfirmDelete = () => {
+    if (!deletingTaskId) return;
+    deleteTask(deletingTaskId);
+    toast.success("Tarea eliminada correctamente");
+    setDeletingTaskId(null);
+  };
+
   return (
     <div className="m-auto flex min-h-screen w-full flex-col items-center overflow-x-auto overflow-y-hidden px-[40px]">
-      {/* 4. BARRA DE BÚSQUEDA Y HEADER */}
+      {/* HEADER & BUSCADOR */}
       <div className="flex items-center justify-between w-full max-w-[1500px] py-8 px-4">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-500 to-indigo-500 bg-clip-text text-transparent">
           K-Board
@@ -82,7 +90,6 @@ function App() {
         </div>
       </div>
 
-      {/* BODY DEL TABLERO */}
       <DndContext
         sensors={sensors}
         onDragStart={onDragStart}
@@ -90,16 +97,14 @@ function App() {
         onDragOver={onDragOver}
       >
         <div className="m-auto flex gap-4 pb-4">
-          {" "}
-          {/* Añadido pb-4 para espacio extra abajo */}
           <SortableContext items={columnsId}>
             {columns.map((col) => (
               <ColumnContainer
                 key={col.id}
                 column={col}
-                // 5. IMPORTANTE: Pasamos 'filteredTasks' en lugar de 'tasks'
                 tasks={filteredTasks.filter((task) => task.columnId === col.id)}
                 onEditTask={setEditingTask}
+                onDeleteTask={setDeletingTaskId}
               />
             ))}
           </SortableContext>
@@ -114,6 +119,7 @@ function App() {
                   (task) => task.columnId === activeColumn.id
                 )}
                 onEditTask={setEditingTask}
+                onDeleteTask={() => {}}
               />
             )}
             {activeTask && <TaskCard task={activeTask} />}
@@ -122,6 +128,7 @@ function App() {
         )}
       </DndContext>
 
+      {/* MODALES */}
       {editingTask && (
         <TaskModal
           task={editingTask}
@@ -129,6 +136,14 @@ function App() {
           onClose={() => setEditingTask(null)}
         />
       )}
+
+      <AlertModal
+        isOpen={!!deletingTaskId}
+        onClose={() => setDeletingTaskId(null)}
+        onConfirm={handleConfirmDelete}
+        title="¿Eliminar tarea?"
+        description="Esta acción no se puede deshacer. La tarea se eliminará permanentemente de tu tablero."
+      />
 
       <Toaster position="bottom-center" richColors theme="dark" />
     </div>
