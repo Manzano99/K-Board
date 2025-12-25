@@ -9,10 +9,11 @@ import {
   useSensors,
   type DragOverEvent,
   type DragStartEvent,
+  type DragEndEvent, // Asegúrate de importar DragEndEvent
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { Toaster, toast } from "sonner";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 
 import ColumnContainer from "./components/ColumnContainer";
 import TaskCard from "./components/TaskCard";
@@ -23,9 +24,14 @@ import type { Column, Task, Id } from "./types";
 
 function App() {
   const columns = useStore((state) => state.columns);
+  // Traemos la nueva acción setColumns
+  const setColumns = useStore((state) => state.setColumns);
+
   const tasks = useStore((state) => state.tasks);
   const setTasks = useStore((state) => state.setTasks);
   const deleteTask = useStore((state) => state.deleteTask);
+  const addColumn = useStore((state) => state.addColumn);
+  const deleteColumn = useStore((state) => state.deleteColumn);
 
   const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);
 
@@ -33,8 +39,8 @@ function App() {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Estado para el ID de la tarea que se intenta borrar
   const [deletingTaskId, setDeletingTaskId] = useState<Id | null>(null);
+  const [deletingColumnId, setDeletingColumnId] = useState<Id | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -48,45 +54,57 @@ function App() {
 
   const filteredTasks = useMemo(() => {
     if (!searchQuery) return tasks;
-
     const lowerQuery = searchQuery.toLowerCase();
-
     return tasks.filter((task) => {
       const titleMatch = task.title.toLowerCase().includes(lowerQuery);
       const description = task.description || "";
       const descMatch = description.toLowerCase().includes(lowerQuery);
-
       return titleMatch || descMatch;
     });
   }, [tasks, searchQuery]);
 
-  // Función que ejecuta el borrado
-  const handleConfirmDelete = () => {
+  const handleConfirmDeleteTask = () => {
     if (!deletingTaskId) return;
     deleteTask(deletingTaskId);
     toast.success("Tarea eliminada correctamente");
     setDeletingTaskId(null);
   };
 
+  const handleConfirmDeleteColumn = () => {
+    if (!deletingColumnId) return;
+    deleteColumn(deletingColumnId);
+    toast.success("Columna eliminada");
+    setDeletingColumnId(null);
+  };
+
   return (
     <div className="m-auto flex min-h-screen w-full flex-col items-center overflow-x-auto overflow-y-hidden px-[40px]">
-      {/* HEADER & BUSCADOR */}
       <div className="flex items-center justify-between w-full max-w-[1500px] py-8 px-4">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-500 to-indigo-500 bg-clip-text text-transparent">
           K-Board
         </h1>
 
-        <div className="relative group w-full max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-500 group-focus-within:text-rose-500 transition-colors" />
+        <div className="flex gap-4">
+          <div className="relative group w-full max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-500 group-focus-within:text-rose-500 transition-colors" />
+            </div>
+            <input
+              type="text"
+              className="block w-[300px] pl-10 pr-3 py-2 border border-gray-700 rounded-xl leading-5 bg-gray-900 text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-gray-950 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 sm:text-sm transition-all shadow-lg"
+              placeholder="Buscar tareas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-xl leading-5 bg-gray-900 text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-gray-950 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 sm:text-sm transition-all shadow-lg"
-            placeholder="Buscar tareas por título o contenido..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+
+          <button
+            onClick={() => addColumn()}
+            className="h-[38px] px-4 flex items-center gap-2 bg-gray-900 border border-gray-700 hover:border-rose-500 hover:text-rose-500 text-gray-300 rounded-xl transition-all text-sm font-semibold shadow-lg"
+          >
+            <Plus size={18} />
+            Columna
+          </button>
         </div>
       </div>
 
@@ -105,6 +123,7 @@ function App() {
                 tasks={filteredTasks.filter((task) => task.columnId === col.id)}
                 onEditTask={setEditingTask}
                 onDeleteTask={setDeletingTaskId}
+                onDeleteColumn={setDeletingColumnId}
               />
             ))}
           </SortableContext>
@@ -128,7 +147,6 @@ function App() {
         )}
       </DndContext>
 
-      {/* MODALES */}
       {editingTask && (
         <TaskModal
           task={editingTask}
@@ -140,9 +158,17 @@ function App() {
       <AlertModal
         isOpen={!!deletingTaskId}
         onClose={() => setDeletingTaskId(null)}
-        onConfirm={handleConfirmDelete}
+        onConfirm={handleConfirmDeleteTask}
         title="¿Eliminar tarea?"
-        description="Esta acción no se puede deshacer. La tarea se eliminará permanentemente de tu tablero."
+        description="Esta acción no se puede deshacer."
+      />
+
+      <AlertModal
+        isOpen={!!deletingColumnId}
+        onClose={() => setDeletingColumnId(null)}
+        onConfirm={handleConfirmDeleteColumn}
+        title="¿Eliminar columna?"
+        description="ATENCIÓN: Se eliminarán todas las tareas que contenga esta columna. Esta acción es irreversible."
       />
 
       <Toaster position="bottom-center" richColors theme="dark" />
@@ -160,9 +186,25 @@ function App() {
     }
   }
 
-  function onDragEnd() {
+  function onDragEnd(event: DragEndEvent) {
     setActiveColumn(null);
     setActiveTask(null);
+
+    const { active, over } = event;
+    if (!over) return;
+
+    // Solo procesamos si algo cambió de posición
+    if (active.id === over.id) return;
+
+    const isActiveColumn = active.data.current?.type === "Column";
+    if (!isActiveColumn) return;
+
+    // Calculamos los índices usando la variable 'columns' que ya tenemos del store
+    const activeIndex = columns.findIndex((col) => col.id === active.id);
+    const overIndex = columns.findIndex((col) => col.id === over.id);
+
+    // Pasamos directamente el array resultante, no una función
+    setColumns(arrayMove(columns, activeIndex, overIndex));
   }
 
   function onDragOver(event: DragOverEvent) {
@@ -190,10 +232,9 @@ function App() {
       targetColumnId = overId;
     }
 
-    const columnOrder = ["UNVALIDATED", "TODO", "DOING", "DONE"];
-
-    const originalIndex = columnOrder.indexOf(String(activeTask.columnId));
-    const targetIndex = columnOrder.indexOf(String(targetColumnId));
+    const currentColumnIds = columns.map((c) => c.id);
+    const originalIndex = currentColumnIds.indexOf(activeTask.columnId);
+    const targetIndex = currentColumnIds.indexOf(targetColumnId);
 
     if (originalIndex === -1 || targetIndex === -1) return;
 
@@ -203,7 +244,7 @@ function App() {
     if (!isSameColumn && !isAdjacent) {
       toast.error("Movimiento no permitido: Solo columnas contiguas", {
         id: "invalid-move",
-        description: "Intenta mover la tarea paso a paso.",
+        description: "El flujo debe ser paso a paso.",
       });
       return;
     }

@@ -1,16 +1,19 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Column, Task, Priority, Id } from "../types"; // Asegúrate de importar Id
+import type { Column, Task, Priority, Id } from "../types";
 
 interface KanbanState {
   columns: Column[];
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
+  setColumns: (columns: Column[]) => void;
   addTask: (columnId: string | number) => void;
   deleteTask: (id: string | number) => void;
   updateTask: (id: string | number, task: Partial<Task>) => void;
   updateTaskPriority: (id: string | number, priority: Priority) => void;
   updateColumn: (id: Id, title: string) => void;
+  addColumn: () => void;
+  deleteColumn: (id: Id) => void;
 }
 
 export const useStore = create<KanbanState>()(
@@ -25,6 +28,8 @@ export const useStore = create<KanbanState>()(
       tasks: [],
 
       setTasks: (tasks) => set({ tasks }),
+
+      setColumns: (columns) => set({ columns }),
 
       addTask: (columnId) =>
         set((state) => {
@@ -72,6 +77,23 @@ export const useStore = create<KanbanState>()(
           columns: state.columns.map((col) =>
             col.id === id ? { ...col, title } : col
           ),
+        })),
+
+      addColumn: () =>
+        set((state) => ({
+          columns: [
+            ...state.columns,
+            {
+              id: crypto.randomUUID(),
+              title: `Columna ${state.columns.length + 1}`,
+            },
+          ],
+        })),
+
+      deleteColumn: (id) =>
+        set((state) => ({
+          columns: state.columns.filter((col) => col.id !== id),
+          tasks: state.tasks.filter((task) => task.columnId !== id),
         })),
     }),
     {

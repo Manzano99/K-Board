@@ -1,5 +1,5 @@
-import { PlusCircle } from "lucide-react";
-import type { Column, Task } from "../types";
+import { PlusCircle, Trash2 } from "lucide-react";
+import type { Column, Task, Id } from "../types";
 import { useStore } from "../store/useStore";
 import TaskCard from "./TaskCard";
 import { useMemo, useState } from "react";
@@ -11,15 +11,21 @@ interface Props {
   tasks: Task[];
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string | number) => void;
+  // Nueva prop opcional para borrar columna
+  onDeleteColumn?: (columnId: Id) => void;
 }
 
-function ColumnContainer({ column, tasks, onEditTask, onDeleteTask }: Props) {
+function ColumnContainer({
+  column,
+  tasks,
+  onEditTask,
+  onDeleteTask,
+  onDeleteColumn,
+}: Props) {
   const addTask = useStore((state) => state.addTask);
-  // Importamos la nueva función
   const updateColumn = useStore((state) => state.updateColumn);
 
   const tasksIds = useMemo(() => tasks.map((task) => task.id), [tasks]);
-
   const [editMode, setEditMode] = useState(false);
 
   const {
@@ -35,6 +41,7 @@ function ColumnContainer({ column, tasks, onEditTask, onDeleteTask }: Props) {
       type: "Column",
       column,
     },
+    disabled: editMode,
   });
 
   const style = {
@@ -56,25 +63,22 @@ function ColumnContainer({ column, tasks, onEditTask, onDeleteTask }: Props) {
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-gray-900 w-[350px] h-[500px] max-h-[500px] rounded-md flex flex-col border-2 border-gray-800"
+      className="bg-gray-900 w-[350px] h-[500px] max-h-[500px] rounded-md flex flex-col border-2 border-gray-800 group/column" // group/column para hover effects
     >
-      {/* HEADER DE LA COLUMNA */}
+      {/* HEADER */}
       <div
         {...attributes}
         {...listeners}
-        // Activamos edición con DOBLE CLIC
         onDoubleClick={() => setEditMode(true)}
-        className="bg-gray-950 text-md h-[60px] cursor-grab rounded-md rounded-b-none p-3 font-bold border-gray-800 border-4 flex items-center justify-between hover:border-gray-700 transition-colors"
+        className="bg-gray-950 text-md h-[60px] cursor-grab rounded-md rounded-b-none p-3 font-bold border-gray-800 border-4 flex items-center justify-between hover:border-gray-700 transition-colors relative"
       >
-        <div className="flex gap-2 items-center flex-grow">
-          {/* Contador de tareas */}
-          <div className="flex justify-center items-center bg-gray-900 px-2 py-1 text-sm rounded-full">
+        <div className="flex gap-2 items-center flex-grow overflow-hidden">
+          <div className="flex justify-center items-center bg-gray-900 px-2 py-1 text-sm rounded-full shrink-0">
             {tasks.length}
           </div>
 
-          {/* Lógica de Edición vs Visualización */}
           {!editMode && (
-            <span className="cursor-text select-none ml-2 text-gray-100">
+            <span className="cursor-text select-none ml-2 text-gray-100 truncate">
               {column.title}
             </span>
           )}
@@ -94,9 +98,23 @@ function ColumnContainer({ column, tasks, onEditTask, onDeleteTask }: Props) {
             />
           )}
         </div>
+
+        {/* Botón Borrar Columna: Solo visible si pasamos la función y no estamos editando */}
+        {!editMode && onDeleteColumn && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Evita que se active el drag
+              onDeleteColumn(column.id);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="text-gray-500 hover:text-white hover:bg-red-900/50 p-1.5 rounded-md transition-all opacity-0 group-hover/column:opacity-100 ml-2"
+          >
+            <Trash2 size={18} />
+          </button>
+        )}
       </div>
 
-      {/* BODY DE TAREAS */}
+      {/* BODY */}
       <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
         <SortableContext items={tasksIds}>
           {tasks.map((task) => (
@@ -110,16 +128,14 @@ function ColumnContainer({ column, tasks, onEditTask, onDeleteTask }: Props) {
         </SortableContext>
       </div>
 
-      {/* FOOTER (Solo visible si es la columna inicial o si quieres que todas tengan botón) */}
-      {column.id === "UNVALIDATED" && (
-        <button
-          className="flex gap-2 items-center border-gray-800 border-2 rounded-md p-4 border-x-gray-900 hover:bg-gray-950 hover:text-rose-500 active:bg-black transition-colors"
-          onClick={() => addTask(column.id)}
-        >
-          <PlusCircle />
-          Añadir tarea
-        </button>
-      )}
+      {/* FOOTER: Botón de añadir tarea */}
+      <button
+        className="flex gap-2 items-center border-gray-800 border-2 rounded-md p-4 border-x-gray-900 hover:bg-gray-950 hover:text-rose-500 active:bg-black transition-colors"
+        onClick={() => addTask(column.id)}
+      >
+        <PlusCircle />
+        Añadir tarea
+      </button>
     </div>
   );
 }
