@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# K-Board
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este es un proyecto Front-End sobre un tablero Kanban minimalista y eficiente.
 
-Currently, two official plugins are available:
+## Funcionalidades destacadas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Gestión de Tareas (CRUD):** Creación, edición de contenido en tiempo real y eliminación de tareas.
+- **Drag & Drop:** Experiencia fluida para reordenar tareas utilizando sensores de puntero optimizados.
+- **Validación de Flujo Estricta:** Implementación de lógica de negocio que solo permite mover tareas a columnas adyacentes (ej. de _Pendiente_ → _En Progreso_), bloqueando saltos de estado inválidos para asegurar la integridad del proceso y el flujo correcto de las tareas.
+- **Persistencia de Datos:** Integración de Middleware en Zustand para sincronizar el estado automáticamente con `localStorage`, manteniendo tus tareas seguras al recargar.
+- **UI/UX Moderna:** Interfaz oscura, tarjetas reactivas y feedback visual inmediato.
 
-## React Compiler
+## Stack tecnológico
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Core:** React + TypeScript
+- **Estilos:** Tailwind CSS
+- **Gestión de Estado:** Zustand
+- **Interactividad:** @dnd-kit
+- **Iconos:** Lucide React
 
-## Expanding the ESLint configuration
+## Instalación y ejecución
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Para ejecutar este proyecto en local, necesitas tener instalado **Node.js**. Sigue estos pasos:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 1. Clonar el repositorio
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/Manzano99/k-board.git
+cd k-board
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Instalar dependencias
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Este comando descargará e instalará automáticamente todos los paquetes necesarios (Zustand, Tailwind, dnd-kit, etc.) definidos en el `package.json`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 3. Ejecución
+
+Este comando iniciará el entorno local:
+
+```bash
+npm run dev
+```
+
+### 4. Visualización
+
+Para visualizar la aplicación entra en la siguiente dirección:
+
+http://localhost:5173
