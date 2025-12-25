@@ -11,7 +11,6 @@ interface Props {
   tasks: Task[];
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string | number) => void;
-  // Nueva prop opcional para borrar columna
   onDeleteColumn?: (columnId: Id) => void;
 }
 
@@ -49,12 +48,15 @@ function ColumnContainer({
     transform: CSS.Transform.toString(transform),
   };
 
+  const responsiveClasses =
+    "w-[350px] max-w-[90vw] h-[500px] max-h-[500px] rounded-md flex flex-col shrink-0 snap-center";
+
   if (isDragging) {
     return (
       <div
         ref={setNodeRef}
         style={style}
-        className="bg-gray-800 opacity-40 border-2 border-rose-500 w-[350px] h-[500px] max-h-[500px] rounded-md flex flex-col"
+        className={`bg-gray-800 opacity-40 border-2 border-rose-500 ${responsiveClasses}`}
       ></div>
     );
   }
@@ -63,7 +65,7 @@ function ColumnContainer({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-gray-900 w-[350px] h-[500px] max-h-[500px] rounded-md flex flex-col border-2 border-gray-800 group/column" // group/column para hover effects
+      className={`bg-gray-900 border-2 border-gray-800 group/column ${responsiveClasses}`}
     >
       {/* HEADER */}
       <div
@@ -99,11 +101,10 @@ function ColumnContainer({
           )}
         </div>
 
-        {/* Botón Borrar Columna: Solo visible si pasamos la función y no estamos editando */}
         {!editMode && onDeleteColumn && (
           <button
             onClick={(e) => {
-              e.stopPropagation(); // Evita que se active el drag
+              e.stopPropagation();
               onDeleteColumn(column.id);
             }}
             onPointerDown={(e) => e.stopPropagation()}
@@ -128,7 +129,7 @@ function ColumnContainer({
         </SortableContext>
       </div>
 
-      {/* FOOTER: Botón de añadir tarea */}
+      {/* FOOTER */}
       <button
         className="flex gap-2 items-center border-gray-800 border-2 rounded-md p-4 border-x-gray-900 hover:bg-gray-950 hover:text-rose-500 active:bg-black transition-colors"
         onClick={() => addTask(column.id)}

@@ -9,7 +9,7 @@ import {
   useSensors,
   type DragOverEvent,
   type DragStartEvent,
-  type DragEndEvent, // Asegúrate de importar DragEndEvent
+  type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { Toaster, toast } from "sonner";
@@ -24,9 +24,7 @@ import type { Column, Task, Id } from "./types";
 
 function App() {
   const columns = useStore((state) => state.columns);
-  // Traemos la nueva acción setColumns
   const setColumns = useStore((state) => state.setColumns);
-
   const tasks = useStore((state) => state.tasks);
   const setTasks = useStore((state) => state.setTasks);
   const deleteTask = useStore((state) => state.deleteTask);
@@ -78,20 +76,24 @@ function App() {
   };
 
   return (
-    <div className="m-auto flex min-h-screen w-full flex-col items-center overflow-x-auto overflow-y-hidden px-[40px]">
-      <div className="flex items-center justify-between w-full max-w-[1500px] py-8 px-4">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-500 to-indigo-500 bg-clip-text text-transparent">
+    // - flex-col: Para apilar header y contenido.
+    // - items-center: Centrado en escritorio.
+    // - px-2 md:px-[40px]: Menos padding en móvil para aprovechar espacio.
+    <div className="m-auto flex min-h-screen w-full flex-col items-center overflow-x-hidden px-2 md:px-[40px]">
+      {/* HEADER RESPONSIVE */}
+      <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-[1500px] py-4 md:py-8 gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-rose-500 to-indigo-500 bg-clip-text text-transparent">
           K-Board
         </h1>
 
-        <div className="flex gap-4">
-          <div className="relative group w-full max-w-md">
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <div className="relative group w-full md:w-auto">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-500 group-focus-within:text-rose-500 transition-colors" />
             </div>
             <input
               type="text"
-              className="block w-[300px] pl-10 pr-3 py-2 border border-gray-700 rounded-xl leading-5 bg-gray-900 text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-gray-950 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 sm:text-sm transition-all shadow-lg"
+              className="block w-full md:w-[300px] pl-10 pr-3 py-2 border border-gray-700 rounded-xl leading-5 bg-gray-900 text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-gray-950 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 sm:text-sm transition-all shadow-lg"
               placeholder="Buscar tareas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -100,7 +102,7 @@ function App() {
 
           <button
             onClick={() => addColumn()}
-            className="h-[38px] px-4 flex items-center gap-2 bg-gray-900 border border-gray-700 hover:border-rose-500 hover:text-rose-500 text-gray-300 rounded-xl transition-all text-sm font-semibold shadow-lg"
+            className="h-[38px] px-4 flex items-center justify-center gap-2 bg-gray-900 border border-gray-700 hover:border-rose-500 hover:text-rose-500 text-gray-300 rounded-xl transition-all text-sm font-semibold shadow-lg"
           >
             <Plus size={18} />
             Columna
@@ -114,7 +116,12 @@ function App() {
         onDragEnd={onDragEnd}
         onDragOver={onDragOver}
       >
-        <div className="m-auto flex gap-4 pb-4">
+        {/* CAMBIO 2: Contenedor de columnas con Scroll Snap */}
+        {/* - w-full: Ocupa todo el ancho disponible. */}
+        {/* - overflow-x-auto: Scroll horizontal. */}
+        {/* - snap-x snap-mandatory: Activa el comportamiento magnético. */}
+        {/* - pb-4: Espacio abajo para que no se corte la sombra. */}
+        <div className="flex gap-4 pb-4 w-full overflow-x-auto snap-x snap-mandatory scroll-smooth">
           <SortableContext items={columnsId}>
             {columns.map((col) => (
               <ColumnContainer
@@ -127,6 +134,8 @@ function App() {
               />
             ))}
           </SortableContext>
+          {/* Espaciador invisible al final para que la última columna no quede pegada al borde */}
+          <div className="w-2 md:w-0 shrink-0" />
         </div>
 
         {createPortal(
@@ -181,7 +190,7 @@ function App() {
       return;
     }
     if (event.active.data.current?.type === "Task") {
-      setActiveTask({ ...event.active.data.current.task });
+      setActiveTask(event.active.data.current.task);
       return;
     }
   }
@@ -193,17 +202,14 @@ function App() {
     const { active, over } = event;
     if (!over) return;
 
-    // Solo procesamos si algo cambió de posición
     if (active.id === over.id) return;
 
     const isActiveColumn = active.data.current?.type === "Column";
     if (!isActiveColumn) return;
 
-    // Calculamos los índices usando la variable 'columns' que ya tenemos del store
     const activeIndex = columns.findIndex((col) => col.id === active.id);
     const overIndex = columns.findIndex((col) => col.id === over.id);
 
-    // Pasamos directamente el array resultante, no una función
     setColumns(arrayMove(columns, activeIndex, overIndex));
   }
 
@@ -255,10 +261,7 @@ function App() {
 
       if (tasks[activeIndex].columnId !== tasks[overIndex].columnId) {
         const newTasks = [...tasks];
-        newTasks[activeIndex] = {
-          ...newTasks[activeIndex],
-          columnId: tasks[overIndex].columnId,
-        };
+        newTasks[activeIndex].columnId = tasks[overIndex].columnId;
         setTasks(arrayMove(newTasks, activeIndex, overIndex - 1));
       } else {
         setTasks(arrayMove(tasks, activeIndex, overIndex));
@@ -270,10 +273,7 @@ function App() {
     if (isActiveTask && isOverColumn) {
       const activeIndex = tasks.findIndex((t) => t.id === activeId);
       const newTasks = [...tasks];
-      newTasks[activeIndex] = {
-        ...newTasks[activeIndex],
-        columnId: overId,
-      };
+      newTasks[activeIndex].columnId = overId;
       setTasks(arrayMove(newTasks, activeIndex, activeIndex));
     }
   }
