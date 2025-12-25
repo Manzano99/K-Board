@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Column, Task, Priority } from "../types";
+import type { Column, Task, Priority, Id } from "../types"; // Asegúrate de importar Id
 
 interface KanbanState {
   columns: Column[];
@@ -8,9 +8,9 @@ interface KanbanState {
   setTasks: (tasks: Task[]) => void;
   addTask: (columnId: string | number) => void;
   deleteTask: (id: string | number) => void;
-  // CAMBIO IMPORTANTE: Ahora updateTask acepta un objeto parcial
   updateTask: (id: string | number, task: Partial<Task>) => void;
   updateTaskPriority: (id: string | number, priority: Priority) => void;
+  updateColumn: (id: Id, title: string) => void;
 }
 
 export const useStore = create<KanbanState>()(
@@ -64,6 +64,13 @@ export const useStore = create<KanbanState>()(
         set((state) => ({
           tasks: state.tasks.map((task) =>
             task.id === id ? { ...task, priority } : task
+          ),
+        })),
+
+      updateColumn: (id, title) =>
+        set((state) => ({
+          columns: state.columns.map((col) =>
+            col.id === id ? { ...col, title } : col
           ),
         })),
     }),
