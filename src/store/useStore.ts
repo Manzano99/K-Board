@@ -8,8 +8,8 @@ interface KanbanState {
   setTasks: (tasks: Task[]) => void;
   addTask: (columnId: string | number) => void;
   deleteTask: (id: string | number) => void;
-  updateTask: (id: string | number, content: string) => void;
-  // Nueva acción
+  // CAMBIO IMPORTANTE: Ahora updateTask acepta un objeto parcial
+  updateTask: (id: string | number, task: Partial<Task>) => void;
   updateTaskPriority: (id: string | number, priority: Priority) => void;
 }
 
@@ -27,31 +27,39 @@ export const useStore = create<KanbanState>()(
       setTasks: (tasks) => set({ tasks }),
 
       addTask: (columnId) =>
-        set((state) => ({
-          tasks: [
-            ...state.tasks,
-            {
-              id: crypto.randomUUID(),
-              columnId,
-              content: `Nueva tarea ${state.tasks.length + 1}`,
-              priority: "Low", // Valor por defecto
-            },
-          ],
-        })),
+        set((state) => {
+          const now = new Date();
+          const threeDaysLater = new Date();
+          threeDaysLater.setDate(now.getDate() + 3);
+
+          return {
+            tasks: [
+              ...state.tasks,
+              {
+                id: crypto.randomUUID(),
+                columnId,
+                title: `Nueva Tarea ${state.tasks.length + 1}`,
+                description: "Añade una descripción...",
+                priority: "Low",
+                startDate: now.toISOString(),
+                endDate: threeDaysLater.toISOString(),
+              },
+            ],
+          };
+        }),
 
       deleteTask: (id) =>
         set((state) => ({
           tasks: state.tasks.filter((task) => task.id !== id),
         })),
 
-      updateTask: (id, content) =>
+      updateTask: (id, newAttributes) =>
         set((state) => ({
           tasks: state.tasks.map((task) =>
-            task.id === id ? { ...task, content } : task
+            task.id === id ? { ...task, ...newAttributes } : task
           ),
         })),
 
-      // Nueva función para actualizar solo la prioridad
       updateTaskPriority: (id, priority) =>
         set((state) => ({
           tasks: state.tasks.map((task) =>

@@ -11,9 +11,11 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
+import { Toaster, toast } from "sonner";
 
 import ColumnContainer from "./components/ColumnContainer";
 import TaskCard from "./components/TaskCard";
+import TaskModal from "./components/TaskModal";
 import { useStore } from "./store/useStore";
 import type { Column, Task } from "./types";
 
@@ -26,6 +28,9 @@ function App() {
 
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  // Estado para saber qué tarea estamos editando
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -50,6 +55,7 @@ function App() {
                 key={col.id}
                 column={col}
                 tasks={tasks.filter((task) => task.columnId === col.id)}
+                onEditTask={setEditingTask}
               />
             ))}
           </SortableContext>
@@ -63,6 +69,7 @@ function App() {
                 tasks={tasks.filter(
                   (task) => task.columnId === activeColumn.id
                 )}
+                onEditTask={setEditingTask}
               />
             )}
             {activeTask && <TaskCard task={activeTask} />}
@@ -70,6 +77,17 @@ function App() {
           document.body
         )}
       </DndContext>
+
+      {/* 4. Renderizamos el Modal si hay una tarea seleccionada */}
+      {editingTask && (
+        <TaskModal
+          task={editingTask}
+          isOpen={!!editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
+
+      <Toaster position="bottom-center" richColors theme="dark" />
     </div>
   );
 
@@ -124,7 +142,13 @@ function App() {
     const isSameColumn = originalIndex === targetIndex;
     const isAdjacent = Math.abs(originalIndex - targetIndex) === 1;
 
-    if (!isSameColumn && !isAdjacent) return;
+    if (!isSameColumn && !isAdjacent) {
+      toast.error("Movimiento no permitido: Solo columnas contiguas", {
+        id: "invalid-move",
+        description: "Intenta mover la tarea paso a paso.",
+      });
+      return;
+    }
 
     if (isActiveTask && isOverTask) {
       const activeIndex = tasks.findIndex((t) => t.id === activeId);
