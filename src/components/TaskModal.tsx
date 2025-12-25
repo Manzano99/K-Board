@@ -1,7 +1,8 @@
-import { X } from "lucide-react";
+import { X, CalendarX } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { Task } from "../types";
 import { useStore } from "../store/useStore";
+import { toast } from "sonner";
 
 interface Props {
   task: Task;
@@ -9,7 +10,6 @@ interface Props {
   onClose: () => void;
 }
 
-// Helper para convertir fecha ISO a formato YYYY-MM-DD que requieren los inputs type="date"
 const toInputDate = (isoString?: string) => {
   if (!isoString) return "";
   return isoString.split("T")[0];
@@ -18,13 +18,12 @@ const toInputDate = (isoString?: string) => {
 function TaskModal({ task, isOpen, onClose }: Props) {
   const updateTask = useStore((state) => state.updateTask);
 
-  // Estado local del formulario
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [startDate, setStartDate] = useState(toInputDate(task.startDate));
   const [endDate, setEndDate] = useState(toInputDate(task.endDate));
 
-  // Actualizar el formulario si cambia la tarea seleccionada
+  // Actualizar el formulario cuando cambia la tarea seleccionada
   useEffect(() => {
     setTitle(task.title);
     setDescription(task.description);
@@ -34,13 +33,27 @@ function TaskModal({ task, isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
+  const isDateError =
+    startDate && endDate && new Date(endDate) < new Date(startDate);
+
   const handleSave = () => {
+    // 1. VALIDACIÓN LÓGICA FINAL
+    if (isDateError) {
+      toast.error("Fecha inválida", {
+        description: "La fecha de entrega no puede ser anterior al inicio.",
+        icon: <CalendarX className="text-red-500" />,
+      });
+      return; // Bloqueamos el guardado
+    }
+
     updateTask(task.id, {
       title,
       description,
       startDate: startDate ? new Date(startDate).toISOString() : undefined,
       endDate: endDate ? new Date(endDate).toISOString() : undefined,
     });
+
+    toast.success("Tarea guardada correctamente");
     onClose();
   };
 
@@ -60,7 +73,6 @@ function TaskModal({ task, isOpen, onClose }: Props) {
 
         {/* BODY */}
         <div className="p-6 flex flex-col gap-4">
-          {/* Título */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-gray-400 uppercase">
               Título
@@ -74,7 +86,6 @@ function TaskModal({ task, isOpen, onClose }: Props) {
             />
           </div>
 
-          {/* Fechas (Grid de 2 columnas) */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-gray-400 uppercase">
@@ -95,12 +106,23 @@ function TaskModal({ task, isOpen, onClose }: Props) {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-gray-800 border border-gray-700 rounded-md p-2 text-sm text-gray-100 scheme-dark focus:outline-none focus:border-rose-500"
+                // 2. FEEDBACK VISUAL: Borde rojo si hay error
+                className={`bg-gray-800 border rounded-md p-2 text-sm text-gray-100 scheme-dark focus:outline-none focus:ring-1 transition-colors ${
+                  isDateError
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500 text-red-200"
+                    : "border-gray-700 focus:border-rose-500 focus:ring-rose-500"
+                }`}
               />
             </div>
           </div>
 
-          {/* Descripción */}
+          {/* Mensaje de error sutil debajo de las fechas */}
+          {isDateError && (
+            <p className="text-xs text-red-400 font-medium animate-pulse">
+              ⚠️ La entrega debe ser posterior al inicio
+            </p>
+          )}
+
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-gray-400 uppercase">
               Descripción
@@ -124,7 +146,8 @@ function TaskModal({ task, isOpen, onClose }: Props) {
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm font-medium bg-rose-600 text-white rounded-md hover:bg-rose-500 transition-colors shadow-lg shadow-rose-900/20"
+            disabled={!!isDateError}
+            className="px-4 py-2 text-sm font-medium bg-rose-600 text-white rounded-md hover:bg-rose-500 transition-colors shadow-lg shadow-rose-900/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-rose-600"
           >
             Guardar cambios
           </button>
