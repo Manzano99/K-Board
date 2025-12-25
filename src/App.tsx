@@ -12,6 +12,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { Toaster, toast } from "sonner";
+import { Search } from "lucide-react"; // 1. Importamos el icono
 
 import ColumnContainer from "./components/ColumnContainer";
 import TaskCard from "./components/TaskCard";
@@ -28,9 +29,10 @@ function App() {
 
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-
-  // Estado para saber qué tarea estamos editando
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  // 2. Estado para el buscador
+  const [searchQuery, setSearchQuery] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -40,21 +42,63 @@ function App() {
     })
   );
 
+  // 3. Lógica de filtrado
+  // Filtramos las tareas ANTES de distribuirlas a las columnas.
+  // Buscamos coincidencia en Título o Descripción (ignorando mayúsculas/minúsculas)
+  const filteredTasks = useMemo(() => {
+    if (!searchQuery) return tasks;
+
+    const lowerQuery = searchQuery.toLowerCase();
+
+    return tasks.filter((task) => {
+      const titleMatch = task.title.toLowerCase().includes(lowerQuery);
+      // Soporte seguro para descripción o contenido antiguo
+      const description = task.description || "";
+      const descMatch = description.toLowerCase().includes(lowerQuery);
+
+      return titleMatch || descMatch;
+    });
+  }, [tasks, searchQuery]);
+
   return (
-    <div className="m-auto flex min-h-screen w-full items-center justify-center overflow-x-auto overflow-y-hidden px-[40px]">
+    <div className="m-auto flex min-h-screen w-full flex-col items-center overflow-x-auto overflow-y-hidden px-[40px]">
+      {/* 4. BARRA DE BÚSQUEDA Y HEADER */}
+      <div className="flex items-center justify-between w-full max-w-[1500px] py-8 px-4">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-500 to-indigo-500 bg-clip-text text-transparent">
+          K-Board
+        </h1>
+
+        <div className="relative group w-full max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-500 group-focus-within:text-rose-500 transition-colors" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-xl leading-5 bg-gray-900 text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-gray-950 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 sm:text-sm transition-all shadow-lg"
+            placeholder="Buscar tareas por título o contenido..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* BODY DEL TABLERO */}
       <DndContext
         sensors={sensors}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         onDragOver={onDragOver}
       >
-        <div className="m-auto flex gap-4">
+        <div className="m-auto flex gap-4 pb-4">
+          {" "}
+          {/* Añadido pb-4 para espacio extra abajo */}
           <SortableContext items={columnsId}>
             {columns.map((col) => (
               <ColumnContainer
                 key={col.id}
                 column={col}
-                tasks={tasks.filter((task) => task.columnId === col.id)}
+                // 5. IMPORTANTE: Pasamos 'filteredTasks' en lugar de 'tasks'
+                tasks={filteredTasks.filter((task) => task.columnId === col.id)}
                 onEditTask={setEditingTask}
               />
             ))}
@@ -66,7 +110,7 @@ function App() {
             {activeColumn && (
               <ColumnContainer
                 column={activeColumn}
-                tasks={tasks.filter(
+                tasks={filteredTasks.filter(
                   (task) => task.columnId === activeColumn.id
                 )}
                 onEditTask={setEditingTask}
@@ -78,7 +122,6 @@ function App() {
         )}
       </DndContext>
 
-      {/* 4. Renderizamos el Modal si hay una tarea seleccionada */}
       {editingTask && (
         <TaskModal
           task={editingTask}
