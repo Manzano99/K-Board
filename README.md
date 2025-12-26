@@ -1,21 +1,43 @@
 # K-Board
 
-Este es un proyecto Front-End sobre un tablero Kanban minimalista y eficiente.
+Este es un proyecto Front-End de un tablero Kanban profesional, minimalista y altamente interactivo. Diseñado para ofrecer una experiencia de usuario fluida y robusta.
 
 ## Funcionalidades destacadas
 
-- **Gestión de Tareas (CRUD):** Creación, edición de contenido en tiempo real y eliminación de tareas.
-- **Drag & Drop:** Experiencia fluida para reordenar tareas utilizando sensores de puntero optimizados.
-- **Validación de Flujo Estricta:** Implementación de lógica de negocio que solo permite mover tareas a columnas adyacentes (ej. de _Pendiente_ → _En Progreso_), bloqueando saltos de estado inválidos para asegurar la integridad del proceso y el flujo correcto de las tareas.
-- **Persistencia de Datos:** Integración de Middleware en Zustand para sincronizar el estado automáticamente con `localStorage`, manteniendo tus tareas seguras al recargar.
-- **UI/UX Moderna:** Interfaz oscura, tarjetas reactivas y feedback visual inmediato.
+### Gestión de tareas
+
+- **Sistema de prioridades:** Clasificación visual (Baja, Media, Alta) con colores dinámicos.
+- **Fechas:** Definición de fecha de inicio y entrega con validación lógica (impide fechas incoherentes).
+- **Contadores:** Indicadores visuales automáticos:
+  - _Gris:_ Días previstos (planificación).
+  - _Azul/Naranja:_ Cuenta atrás en tiempo real.
+  - _Rojo:_ Alerta de tareas vencidas.
+
+### Tablero Dinámico
+
+- **Columnas personalizables:** Crea, elimina y reordena columnas según tu flujo de trabajo.
+- **Edición inline:** Renombra columnas haciendo doble clic sobre el título.
+- **Drag & Drop:** Reordena tanto tareas como columnas completas con una experiencia física y fluida.
+
+### Reglas de Negocio y Seguridad
+
+- **Validación de Flujo Estricta:** Solo permite mover tareas a columnas adyacentes (ej. de _Pendiente_ → _En Progreso_), bloqueando saltos inválidos.
+- **Modales de confirmación:** Protección contra borrados accidentales de tareas o columnas.
+- **Feedback visual:** Notificaciones tipo "Toast" para errores o confirmaciones de acciones.
+
+### Experiencia de Usuario (UX)
+
+- **Diseño responsive:** Adaptado a móviles con _Scroll Snap_ para una navegación nativa entre columnas.
+- **Buscador en tiempo real:** Filtrado instantáneo de tareas por título o descripción.
+- **Persistencia de datos:** Sincronización automática con `localStorage` mediante middleware de Zustand.
 
 ## Stack tecnológico
 
 - **Core:** React + TypeScript
 - **Estilos:** Tailwind CSS
 - **Gestión de Estado:** Zustand
-- **Interactividad:** @dnd-kit
+- **Interactividad:** @dnd-kit (Core, Sortable, Utilities)
+- **Notificaciones:** Sonner
 - **Iconos:** Lucide React
 
 ## Instalación y ejecución
