@@ -1,6 +1,10 @@
 # K-Board
 
-Este es un proyecto Front-End de un tablero Kanban profesional, minimalista y altamente interactivo. Diseñado para ofrecer una experiencia de usuario fluida y robusta.
+[![Demo](https://img.shields.io/badge/Live_Demo-Ver_Aplicación-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://k-board-project.vercel.app/)
+
+Este es un proyecto Front-End de un tablero Kanban profesional, minimalista y altamente interactivo, diseñado para ofrecer una experiencia de usuario fluida y robusta.
+
+**Pruébalo ahora mismo sin instalar nada:**  https://k-board-project.vercel.app/
 
 ## Funcionalidades destacadas
 
